@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Web Cloner — AI Agent</title>
+  <link rel="stylesheet" href="./styles.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <header class="app__header">
+      <div class="brand">
+        <div class="brand__logo">⚡</div>
+        <div class="brand__meta">
+          <h1 class="brand__title">Web Cloner</h1>
+          <p class="brand__subtitle">AI-powered site snapshot → .zip</p>
+        </div>
+      </div>
+      <div class="badge">Agentic • Puppeteer • Static/Dynamic</div>
+    </header>
+
+    <main class="card">
+      <section class="intro">
+        <h2>Clone any website into a downloadable ZIP</h2>
+        <p class="muted">
+            Best suited for lightweight or fast-loading sites (SPAs).  
+            Heavy websites with complex JS (like Myntra) may take longer or fail.  
+            Paste a URL and get a zip of HTML, CSS, JS, and assets quickly.
+        </p>
+      </section>
+
+      <section class="form">
+        <label for="url" class="label">Website URL</label>
+        <div class="input-row">
+          <input
+            type="url"
+            id="url"
+            class="input"
+            placeholder="https://example.com"
+            autocomplete="off"
+            spellcheck="false"
+            required
+          />
+          <button id="cloneBtn" class="btn btn--primary">
+            <span class="btn__label">Clone</span>
+            <span class="spinner" aria-hidden="true"></span>
+          </button>
+        </div>
+        <p class="hint">Pro tip: works with both static and SPA/SSR sites.</p>
+      </section>
+
+      <section id="status" class="status hidden" aria-live="polite"></section>
+
+      <section id="result" class="result hidden">
+        <div class="result__icon">✅</div>
+        <div class="result__body">
+          <h3 class="result__title">Clone ready</h3>
+          <p class="result__desc" id="resultDesc"></p>
+        </div>
+        <a id="downloadLink" class="btn btn--ghost" href="#" download>
+          Download ZIP
+        </a>
+      </section>
+    </main>
+
+    <footer class="app__footer">
+      <p class="muted">
+        Built with <strong>OpenAI</strong>, <strong>Puppeteer</strong>, and a sprinkle of elegance ✨
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    const urlInput = document.getElementById("url");
+    const cloneBtn = document.getElementById("cloneBtn");
+    const statusBox = document.getElementById("status");
+    const resultBox = document.getElementById("result");
+    const resultDesc = document.getElementById("resultDesc");
+    const downloadLink = document.getElementById("downloadLink");
+
+    function setLoading(isLoading) {
+      cloneBtn.classList.toggle("loading", isLoading);
+      cloneBtn.disabled = isLoading;
+    }
+
+    function showStatus(text, variant = "info") {
+      statusBox.textContent = text;
+      statusBox.className = "status";
+      statusBox.classList.add(variant);
+      statusBox.classList.remove("hidden");
+    }
+
+    function hideStatus() {
+      statusBox.classList.add("hidden");
+    }
+
+    function showResult(desc, downloadHref) {
+  resultDesc.textContent = desc;
+  downloadLink.href = downloadHref;
+
+  // Show result box and icon
+  resultBox.classList.remove("hidden");
+  const icon = resultBox.querySelector(".result__icon");
+  icon.classList.remove("hidden");
+}
+
+function hideResult() {
+  resultBox.classList.add("hidden");
+  const icon = resultBox.querySelector(".result__icon");
+  icon.classList.add("hidden");
+}
+
+    async function cloneSite() {
+      const url = (urlInput.value || "").trim();
+      hideResult();
+
+      if (!url || !/^https?:\/\/.+/i.test(url)) {
+        showStatus("Please enter a valid URL starting with http:// or https://", "warn");
+        return;
+      }
+
+      setLoading(true);
+      showStatus("Starting clone… resolving static/dynamic render path.", "info");
+
+      try {
+        const res = await fetch("/api/clone", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err?.message || "Clone failed. Please try again.");
+        }
+
+        const data = await res.json();
+        // data = { message, zipFileName, downloadPath, mode }
+        hideStatus();
+        showResult(
+          `${data.message} (mode: ${data.mode}).`,
+          data.downloadPath
+        );
+      } catch (e) {
+        showStatus(e.message || "Something went wrong.", "error");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    cloneBtn.addEventListener("click", cloneSite);
+    urlInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") cloneSite();
+    });
+  </script>
+</body>
+</html>
