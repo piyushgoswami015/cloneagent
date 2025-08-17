@@ -153,7 +153,7 @@ const tools = {
     const zipPath = path.resolve(`./${zipName}`);
     zip.writeZip(zipPath);
 
-    // 🔹 NEW: also place a copy under ./public/downloads for direct download
+    //  NEW: also place a copy under ./public/downloads for direct download
     const downloadsDir = path.resolve("./public/downloads");
     await fs.promises.mkdir(downloadsDir, { recursive: true });
     const publicZipPath = path.join(downloadsDir, zipName);
@@ -171,7 +171,7 @@ const tools = {
 
 
 
-// ✅ Agent loop (unchanged but exported if you still want CLI usage)
+
 async function runAgent(userPrompt) {
   const messages = [
     { role: "system", content: SYSTEM_PROMPT },
